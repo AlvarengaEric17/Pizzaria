@@ -98,6 +98,14 @@ Dev dependencies:
   - Validação: `createCategorySchema`
   - Execução: `CreateCategoryController` → `CreateCategoryService`
 
+### Produtos por categoria
+
+- `GET /category/product/:category_id`
+  - Retorna todos os produtos de uma categoria específica
+  - Requer autenticação JWT
+  - Parâmetro: `category_id` no `params`
+  - Execução: `ListProductByCategoryController` → `ListProductByCategoryService`
+
 ## 6. Validação de dados (schemas)
 
 ### `src/schemas/userSchemas.ts`
@@ -115,6 +123,11 @@ Dev dependencies:
 
 - `createCategorySchema`
   - `name`: string, mínimo 2 caracteres
+
+### `src/schemas/productSchema.ts`
+
+- `listProductByCategorySchema`
+  - `params.category_id`: string, obrigatório
 
 ### Middleware de validação
 

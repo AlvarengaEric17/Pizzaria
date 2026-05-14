@@ -7,7 +7,7 @@ export const validateSchema = (schema: ZodType) => async (req: Request, res: Res
         await schema.parseAsync({
             body: req.body,
             query: req.query,
-            parms: req.params
+            params: req.params
         })
         return next();
     } catch (error) {
