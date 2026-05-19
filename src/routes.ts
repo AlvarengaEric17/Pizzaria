@@ -17,9 +17,16 @@ import { createProductSchema, listProductSchema, listProductByCategorySchema } f
 import { ListProductController } from './controllers/Product/ListProductController.js';
 import { DeleteProductController } from './controllers/Product/DeleteProductController.js';
 import { CreateOrderController } from './controllers/Order/CreateOrderController.js';
-import { addItemOrderSchema, createOrderSchema } from './schemas/orderSchema.js';
+import { addItemOrderSchema, createOrderSchema, removeItemOrderSchema, detailOrderSchema, sendOrderSchema, deleteOrderSchema } from './schemas/orderSchema.js';
 import { ListOrderController } from './controllers/Order/ListOrderController.js';
 import { AddItemOrderController } from './controllers/Order/AddItemOrderController.js';
+import { RemoveItemOrderController } from './controllers/Order/RemoveItemOrderController.js';
+import { DetailOrderController } from './controllers/Order/DetailOrderController.js';
+import { SendOrderController } from './controllers/Order/SendOrderController.js';
+import { FinishOrderController } from './controllers/Order/FinishOrderController.js';
+import { finishOrderSchema } from './schemas/orderSchema.js';
+import { DeleteOrderController } from './controllers/Order/DeleteOrderController.js';
+
 
 const router = Router();
 
@@ -55,5 +62,26 @@ router.get("/orders", isAuthenticated, new ListOrderController().handle);
 // Adicionar item a order
 
 router.post("/order/add", isAuthenticated, validateSchema(addItemOrderSchema), new AddItemOrderController().handle);
+
+// Remover item da order
+
+router.delete("/order/remove", isAuthenticated, validateSchema(removeItemOrderSchema), new RemoveItemOrderController().handle);
+
+// Detalhe da order
+
+router.get("/order/detail", isAuthenticated, validateSchema(detailOrderSchema), new DetailOrderController().handle);
+
+// Mandar o pedido para a cozinha
+
+router.put("/order/send", isAuthenticated, validateSchema(sendOrderSchema), new SendOrderController().handle);
+
+// Finalizar pedido
+
+router.put("/order/finish", isAuthenticated, validateSchema(finishOrderSchema), new FinishOrderController().handle);
+
+// Deletar Order
+
+router.delete("/order", isAuthenticated, validateSchema(deleteOrderSchema), new DeleteOrderController().handle);
+
 
 export { router }

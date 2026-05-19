@@ -1,5 +1,27 @@
 # Documento de Contexto do Projeto Pizzaria
 
+**📚 Documentação Detalhada dos Endpoints:** Consulte o arquivo [`endpoints.md`](endpoints.md) para a documentação completa de todos os 17 endpoints com exemplos de requisição/resposta, validações e códigos de erro.
+
+## 📋 Índice
+
+1. [Visão Geral](#1-visão-geral)
+2. [Tecnologias e versões](#2-tecnologias-e-versões-principais)
+3. [Organização de pastas](#3-organização-de-pastas)
+4. [Arquitetura de execução](#4-arquitetura-de-execução)
+5. [Endpoints completos](#5-endpoints-completos)
+6. [Organização de Controllers e Services](#6-organização-de-controllers-e-services)
+7. [Validação de dados (schemas)](#7-validação-de-dados-schemas)
+8. [Middlewares](#8-middlewares)
+9. [Tratamento de Erros](#9-tratamento-de-erros)
+10. [Upload de Imagens](#10-upload-de-imagens)
+11. [Modelagem do banco de dados](#11-modelagem-do-banco-de-dados-prisma)
+12. [Configuração do Prisma e banco](#12-configuração-do-prisma-e-banco)
+13. [Variáveis de ambiente](#13-variáveis-de-ambiente)
+14. [Observações importantes](#14-observações-importantes)
+15. [Script de execução](#15-script-de-execução)
+
+---
+
 ## 1. Visão Geral
 
 Este projeto é um backend Node.js escrito em TypeScript usando arquitetura baseada em rotas, controllers, services e Prisma ORM para acesso ao banco de dados PostgreSQL.
@@ -71,93 +93,252 @@ Dev dependencies:
 6. O service acessa o banco via `prismaClient` e retorna o resultado
 7. O controller envia a resposta JSON ao cliente
 
-## 5. Endpoints atuais
+## 5. Endpoints completos
 
-### Usuário
+### ✅ Usuário (User)
 
-- `POST /users`
-  - Cria um novo usuário
-  - Validação: `createUserSchema`
-  - Execução: `CreateUserController` → `CreateUserService`
+| Método | Rota | Função | Autenticação | Autorização |
+|--------|------|--------|--------------|-------------|
+| POST | `/users` | Criar novo usuário | ❌ | ❌ |
+| POST | `/session` | Autenticação (Login) | ❌ | ❌ |
+| GET | `/me` | Detalhes do usuário autenticado | ✅ JWT | Qualquer |
 
-- `POST /session`
-  - Autenticação de usuário
-  - Validação: `authSchema`
-  - Execução: `AuthController` → `AuthUserService`
+**Controllers & Services:**
+- `CreateUserController` → `CreateUserService`
+- `AuthUserController` → `AuthUserService`
+- `DetailUserController` → `DetailUserService`
 
-- `GET /me`
-  - Retorna dados do usuário autenticado
-  - Requer autenticação JWT
-  - Execução: `DetailUserController` → `DetailUserSevice`
+---
 
-### Categoria
+### ✅ Categoria (Category)
 
-- `POST /category`
-  - Cria nova categoria
-  - Requer autenticação JWT e role `ADMIN`
-  - Validação: `createCategorySchema`
-  - Execução: `CreateCategoryController` → `CreateCategoryService`
+| Método | Rota | Função | Autenticação | Autorização |
+|--------|------|--------|--------------|-------------|
+| POST | `/category` | Criar categoria | ✅ JWT | ADMIN |
+| GET | `/category` | Listar todas as categorias | ✅ JWT | Qualquer |
 
-### Produtos por categoria
+**Controllers & Services:**
+- `CreateCategoryController` → `CreateCategoryService`
+- `ListCategoryController` → `ListCategoryService`
 
-- `GET /category/product/:category_id`
-  - Retorna todos os produtos de uma categoria específica
-  - Requer autenticação JWT
-  - Parâmetro: `category_id` no `params`
-  - Execução: `ListProductByCategoryController` → `ListProductByCategoryService`
+---
 
-## 6. Validação de dados (schemas)
+### ✅ Produtos (Product)
+
+| Método | Rota | Função | Autenticação | Autorização |
+|--------|------|--------|--------------|-------------|
+| POST | `/product` | Criar produto com imagem | ✅ JWT | ADMIN |
+| GET | `/products` | Listar produtos (com filtro por status) | ✅ JWT | Qualquer |
+| GET | `/category/product/` | Listar produtos por categoria | ✅ JWT | Qualquer |
+| DELETE | `/product` | Deletar produto | ✅ JWT | ADMIN |
+
+**Controllers & Services:**
+- `CreateProductController` → `CreateProductService`
+- `ListProductController` → `ListProductService`
+- `ListProductByCategoryController` → `ListProductByCategoryService`
+- `DeleteProductController` → `DeleteProductService`
+
+---
+
+### ✅ Pedidos (Order)
+
+| Método | Rota | Função | Autenticação | Autorização |
+|--------|------|--------|--------------|-------------|
+| POST | `/order` | Criar pedido | ✅ JWT | Qualquer |
+| GET | `/orders` | Listar todos os pedidos | ✅ JWT | Qualquer |
+| POST | `/order/add` | Adicionar item ao pedido | ✅ JWT | Qualquer |
+| DELETE | `/order/remove` | Remover item do pedido | ✅ JWT | Qualquer |
+| GET | `/order/detail` | Obter detalhes do pedido | ✅ JWT | Qualquer |
+| PUT | `/order/send` | Enviar pedido para cozinha | ✅ JWT | Qualquer |
+| PUT | `/order/finish` | Finalizar pedido | ✅ JWT | Qualquer |
+| DELETE | `/order` | Deletar pedido | ✅ JWT | Qualquer |
+
+**Controllers & Services:**
+- `CreateOrderController` → `CreateOrderService`
+- `ListOrderController` → `ListOrderService`
+- `AddItemOrderController` → `AddItemOrderService`
+- `RemoveItemOrderController` → `RemoveItemOrderService`
+- `DetailOrderController` → `DetailOrderService`
+- `SendOrderController` → `SendOrderService`
+- `FinishOrderController` → `FinishOrderService`
+- `DeleteOrderController` → `DeleteOrderService`
+
+## 6. Organização de Controllers e Services
+
+### Controllers
+
+Os controllers estão organizados por domínio:
+
+```
+src/controllers/
+├── category/
+│   ├── CreateCategoryController.ts
+│   └── ListCategoryController.ts
+├── Order/
+│   ├── AddItemOrderController.ts
+│   ├── CreateOrderController.ts
+│   ├── DeleteOrderController.ts
+│   ├── DetailOrderController.ts
+│   ├── FinishOrderController.ts
+│   ├── ListOrderController.ts
+│   ├── RemoveItemOrderController.ts
+│   └── SendOrderController.ts
+├── Product/
+│   ├── CreateProductController.ts
+│   ├── DeleteProductController.ts
+│   ├── ListProductByCategoryController.ts
+│   └── ListProductController.ts
+└── user/
+    ├── AuthUserController.ts
+    ├── CreateUserController.ts
+    └── DetailUserController.ts
+```
+
+### Services
+
+Os services implementam a lógica de negócio:
+
+```
+src/services/
+├── Category/
+│   ├── CreateCategoryService.ts
+│   └── ListCategoryService.ts
+├── Order/
+│   ├── AddItemOrderService.ts
+│   ├── CreateOrderService.ts
+│   ├── DeleteOrderService.ts
+│   ├── DetailOrderService.ts
+│   ├── FinishOrderService.ts
+│   ├── ListOrderService.ts
+│   ├── RemoveItemOrderService.ts
+│   └── SendOrdeService.ts
+├── Product/
+│   ├── CreateProductService.ts
+│   ├── DeleteProductService.ts
+│   ├── ListProductByCategoryService.ts
+│   └── ListProductService.ts
+└── user/
+    ├── AuthUserService.ts
+    ├── CreateUserService.ts
+    └── detailUserService.ts
+```
+
+---
+
+## 7. Validação de dados (schemas)
 
 ### `src/schemas/userSchemas.ts`
 
-- `createUserSchema`
+- `createUserSchema`: Validação para criação de usuário
   - `name`: string, mínimo 3 caracteres
   - `email`: email válido
   - `password`: string, mínimo 6 caracteres
 
-- `authSchema`
+- `authSchema`: Validação para autenticação
   - `email`: email válido
-  - `password`: string obrigatório
+  - `password`: string obrigatório (mínimo 1 caractere)
 
 ### `src/schemas/categorySchema.ts`
 
-- `createCategorySchema`
+- `createCategorySchema`: Validação para criação de categoria
   - `name`: string, mínimo 2 caracteres
 
 ### `src/schemas/productSchema.ts`
 
-- `listProductByCategorySchema`
-  - `params.category_id`: string, obrigatório
+- `createProductSchema`: Validação para criação de produto
+  - `name`: string obrigatório
+  - `price`: string numérica (dígitos apenas)
+  - `description`: string obrigatória
+  - `category_id`: string obrigatória
 
-### Middleware de validação
+- `listProductSchema`: Validação para listar produtos
+  - `disable`: string opcional ("true" ou "false")
 
-- `src/middlewares/validateSchema.ts`
-  - Recebe um schema Zod e valida `req.body`, `req.query` e `req.params`
-  - Em caso de falha retorna HTTP 400 com detalhes dos problemas
+- `listProductByCategorySchema`: Validação para listar produtos por categoria
+  - `category_id`: string obrigatória (query param)
 
-## 7. Middlewares
+### `src/schemas/orderSchema.ts`
 
-### `isAuthenticated`
+- `createOrderSchema`: Validação para criação de pedido
+  - `table`: número inteiro obrigatório
+  - `name`: string opcional
+
+- `addItemOrderSchema`: Validação para adicionar item
+  - `order_id`: string obrigatória
+  - `product_id`: string obrigatória
+  - `amount`: número inteiro positivo obrigatório
+
+- `removeItemOrderSchema`: Validação para remover item
+  - `item_id`: string obrigatória (query param)
+
+- `detailOrderSchema`: Validação para detalhe do pedido
+  - `order_id`: string obrigatória (query param)
+
+- `sendOrderSchema`: Validação para enviar pedido
+  - `order_id`: string obrigatória
+  - `name`: string obrigatória
+
+- `finishOrderSchema`: Validação para finalizar pedido
+  - `order_id`: string obrigatória
+
+- `deleteOrderSchema`: Validação para deletar pedido
+  - `order_id`: string obrigatória (query param)
+
+## 8. Middlewares
+
+### `validateSchema.ts`
+
+- Valida os dados da requisição usando schemas Zod
+- Verifica `req.body`, `req.query` e `req.params`
+- Retorna HTTP 400 com detalhes dos erros em caso de falha
+- Usado em quase todos os endpoints
+
+### `isAuthenticated.ts`
 
 - Verifica se o cabeçalho `Authorization` existe
-- Extrai o token Bearer
-- Verifica o JWT usando `process.env.JWT_SECRET`
+- Extrai o token Bearer do formato `Bearer <token>`
+- Valida o JWT usando `process.env.JWT_SECRET`
 - Atribui `req.user_id` a partir do `sub` do token
 - Retorna HTTP 401 em caso de token faltante ou inválido
 
-### `isAdmin`
+### `isAdmin.ts`
 
 - Busca o usuário autenticado no banco via `req.user_id`
 - Verifica se o campo `role` é `ADMIN`
 - Retorna HTTP 401 se não for administrador
+- **Dependência:** Deve ser usado após `isAuthenticated`
 
-### Tratamento de erros global
+---
 
-- `src/server.ts` adiciona middleware de erro ao final
-- Se a exceção for `Error`, retorna status 400 com `error.message`
-- Caso contrário retorna status 500 com mensagem genérica
+## 9. Tratamento de Erros
 
-## 8. Modelagem do banco de dados (Prisma)
+### Middleware de erro global (`src/server.ts`)
+
+- Captura todas as exceções da aplicação
+- Se for instância de `Error`, retorna status 400 com `error.message`
+- Caso contrário, retorna status 500 com mensagem genérica
+- Registra logs de erro no console
+
+---
+
+## 10. Upload de Imagens
+
+### Configuração Multer (`src/config/multer.ts`)
+
+- Configuração para armazenar imagens em buffer
+- Usado no endpoint `POST /product`
+- As imagens são enviadas para Cloudinary após upload
+
+### Integração Cloudinary (`src/config/cloudinary.ts`)
+
+- Autentica com Cloudinary usando variáveis de ambiente
+- Armazena imagens na pasta `products`
+- Gera URLs seguras (`secure_url`) para as imagens
+- Retorna a URL da imagem após upload bem-sucedido
+
+---
+
+## 11. Modelagem do banco de dados (Prisma)
 
 ### Enum `Role`
 
@@ -218,26 +399,26 @@ Dev dependencies:
 - `order`: relação para `Order`
 - `product`: relação para `Product`
 
-## 9. Configuração do Prisma e banco
+## 12. Configuração do Prisma e banco
 
 - `src/prisma/index.ts` importa `dotenv/config`
 - Usa `PrismaClient` gerado em `generated/prisma/client.js`
 - Usa `PrismaPg` como adaptador PostgreSQL
 - A conexão usa `process.env.DATABASE_URL`
 
-## 10. Variáveis de ambiente
+## 13. Variáveis de ambiente
 
 - `PORT` - porta da aplicação
 - `DATABASE_URL` - string de conexão PostgreSQL
 - `JWT_SECRET` - segredo para assinar tokens JWT
 
-## 11. Observações importantes
+## 14. Observações importantes
 
 - O controller não usa tratamento de exceção específico; erros são propagados para o middleware global
 - A rota `POST /category` exige autenticação e autorização de administrador
 - O serviço de autenticação retorna token JWT com validade de 30 dias
 - O serviço de criação de usuário retorna o usuário sem o campo `password`
 
-## 12. Script de execução
+## 15. Script de execução
 
 - `npm run dev` - inicia a aplicação com `tsx watch src/server.ts`
